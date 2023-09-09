@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
             Controller.join_all()
 
-            sleep(5)
+            sleep(1)
 
     except Exception as e:
         logger().error(str(e))
