@@ -106,7 +106,7 @@ class GovDriver(Chrome):
         dates: list[datetime] = []
         try_n = 0
         while True:
-            if try_n >= 15:
+            if try_n >= 50:
                 break
 
             try_n += 1
@@ -187,7 +187,8 @@ class GovDriver(Chrome):
                             ...
 
                     self.get_screenshot_as_file(
-                        f'./screens/{datetime.datetime.combine(_date, _time).strftime("%Y-%m-%d_%H-%M")}.png')
+                        f'./screens/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")}'
+                        f'({datetime.datetime.combine(_date, _time).strftime("%Y-%m-%d_%H-%M")}).png')
 
                     database.write_date(DataDate(bdid=-1,
                                                  datetime=datetime.datetime.combine(_date, _time),
