@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
 
 from app import database
-from DataBaseDataClasses import DataDate
+from app.database_dataclasses import DataDate
 from app.logger import MyLogger
 
 

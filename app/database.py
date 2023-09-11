@@ -1,6 +1,6 @@
 from pymysql import connect
 
-from DataBaseDataClasses import DataBaseData, DataClient, DataDate
+from app.database_dataclasses import DataBaseData, DataClient, DataDate
 
 database_connection_info = {
     'host': '127.0.0.1',
