@@ -10,9 +10,9 @@ from selenium.common import NoSuchElementException, ElementClickInterceptedExcep
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
 
-import database
+from app import database
 from DataBaseDataClasses import DataDate
-from logger import MyLogger
+from app.logger import MyLogger
 
 
 class GovDriver(Chrome):
