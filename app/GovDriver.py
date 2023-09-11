@@ -1,8 +1,10 @@
 """
 Here is all the functional of selenium driver that will parse the site
 """
+import os
 import time
 import datetime
+from os import path
 
 from selenium.common import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.common.by import By
@@ -10,7 +12,7 @@ from undetected_chromedriver import Chrome, ChromeOptions
 
 import database
 from DataBaseDataClasses import DataDate
-from logger import logger
+from logger import MyLogger
 
 
 class GovDriver(Chrome):
@@ -36,7 +38,7 @@ class GovDriver(Chrome):
                                                               "MuiButton-text MuiButton-textPrimary']")
             popup_button.click()
 
-            logger().info("Closed info popup.")
+            MyLogger.logger().info("Closed info popup.")
         except NoSuchElementException:
             pass
 
@@ -67,7 +69,7 @@ class GovDriver(Chrome):
                                   "MuiDialog-paperWidthSm MuiPaper-elevation24 MuiPaper-rounded']")
 
             except NoSuchElementException:
-                logger().info("Captcha solved.")
+                MyLogger.logger().info("Captcha solved.")
                 break
 
         countries_input = self.find_element(By.ID, "consulates")
@@ -89,7 +91,7 @@ class GovDriver(Chrome):
             option = self.find_element(By.CSS_SELECTOR, '[role=option]')
             option.click()
         except NoSuchElementException:
-            logger().warning("Cannot submit option: element is not exists")
+            MyLogger.logger().warning("Cannot submit option: element is not exists")
 
     def control_option(self, option_value: str):
         time.sleep(.15)
@@ -105,6 +107,14 @@ class GovDriver(Chrome):
 
         dates: list[datetime] = []
         try_n = 0
+
+        while True:
+            min_str = datetime.datetime.now().strftime('%M:%S')
+            if min_str == '29:59' or min_str == '59:59':
+                break
+
+            time.sleep(.5)
+
         while True:
             if try_n >= 50:
                 break
@@ -135,7 +145,7 @@ class GovDriver(Chrome):
                                           month=int(data_month),
                                           year=int(data_year))
 
-                    logger().info(str(_date))
+                    MyLogger.logger().info(str(_date))
 
                     dates.append(_date)
 
@@ -186,8 +196,11 @@ class GovDriver(Chrome):
                         except ElementClickInterceptedException:
                             ...
 
+                    if not path.exists('screens'):
+                        os.mkdir('screens')
+
                     self.get_screenshot_as_file(
-                        f'./screens/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")}'
+                        f'screens/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")}'
                         f'({datetime.datetime.combine(_date, _time).strftime("%Y-%m-%d_%H-%M")}).png')
 
                     database.write_date(DataDate(bdid=-1,
@@ -199,7 +212,7 @@ class GovDriver(Chrome):
 
                     while True: ...
                 except NoSuchElementException:
-                    logger().error("Cannot get .rdtPicker (calendar).")
+                    MyLogger.logger().error("Cannot get .rdtPicker (calendar).")
 
     def update_option(self, option_value: str):
         __option_value_to_switch: str = "Постійний КО"

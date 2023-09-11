@@ -4,13 +4,11 @@ Here are thread controlling functional
 from multiprocessing import Process
 from queue import Queue
 
-from GovDriver import GovDriver
-from logger import logger
-from threads import Worker
+from app.GovDriver import GovDriver
+from app.logger import MyLogger
 
 
 class Controller:
-    __workers: list[Worker] = []
     __control_processes: list[Process] = []
     __drivers: list[GovDriver] = []
 
@@ -40,7 +38,7 @@ class Controller:
 
     @classmethod
     def start_control_option(cls, option_value: str):
-        logger().info(f"Start controlling option: {option_value}")
+        MyLogger.logger().info(f"Start controlling option: {option_value}")
 
         driver = GovDriver()
 
@@ -58,7 +56,7 @@ class Controller:
 
     @classmethod
     def kill_all_processes(cls):
-        logger().info("Killing all processes.")
+        MyLogger.logger().info("Killing all processes.")
 
         for driver in cls.__drivers:
             driver.quit()
