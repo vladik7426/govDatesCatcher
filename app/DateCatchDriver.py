@@ -10,20 +10,27 @@ from selenium.common import NoSuchElementException, ElementClickInterceptedExcep
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
 
-from app import database
-from app.database_dataclasses import DataDate
 from app.logger import MyLogger
+from gdc_database import db_clients, db_dates
+from gdc_database.db_clients import DataClient
+from gdc_database.db_dates import DataDate
 
 
-class GovDriver(Chrome):
+class DateCatchDriver(Chrome):
     def __init__(self):
-        self.options = ChromeOptions()
-        self.options.add_experimental_option('prefs', {
+        options = ChromeOptions()
+        options.add_experimental_option('prefs', {
             'profile': {'profileName': 'Profile 1'}})
-        self.options.add_argument('user-data-dir=C:/Users/uavla/AppData/Local/Google/Chrome/User Data')
+        options.add_argument('--disable-application-cache')
+        options.add_argument('--disable-gpu')
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-setuid-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument('user-data-dir=C:/Users/uavla/AppData/Local/Google/Chrome/User Data')
 
-        super().__init__(options=self.options, use_subprocess=True)
+        super().__init__(options=options, use_subprocess=True)
 
+    def set_basic_inputs_values(self, consulate: str):
         self.get('https://online.mfa.gov.ua/application/')
 
         while True:
@@ -42,14 +49,8 @@ class GovDriver(Chrome):
         except NoSuchElementException:
             pass
 
-        time.sleep(.5)
-
-        self.__set_basic_inputs_value()
-
-    def __set_basic_inputs_value(self):
         countries_input = self.find_element(By.ID, "countries")
         countries_input.send_keys('.Канада')
-        # countries_input.send_keys('.Бразилія')
 
         self.submit_option()
 
@@ -73,57 +74,42 @@ class GovDriver(Chrome):
                 break
 
         countries_input = self.find_element(By.ID, "consulates")
-        countries_input.send_keys('.ГКУ в Торонто')
-        # countries_input.send_keys('.ПУ в Канаді')
-        # countries_input.send_keys('.ПУ в Бразилії')
+        countries_input.send_keys('.' + consulate)
 
         self.submit_option()
 
-        time.sleep(.5)
+        time.sleep(.1)
 
         countries_input = self.find_element(By.ID, "categories")
         countries_input.send_keys('.Паспортні дії')
 
         self.submit_option()
 
-    def submit_option(self):
-        try:
-            option = self.find_element(By.CSS_SELECTOR, '[role=option]')
-            option.click()
-        except NoSuchElementException:
-            MyLogger.logger().warning("Cannot submit option: element is not exists")
-
-    def control_option(self, option_value: str):
+    def catch_date_for_client(self, client: DataClient) -> bool:
         time.sleep(.15)
 
         services_input = self.find_element(By.ID, 'services')
-
         time_input = self.find_element(By.CSS_SELECTOR, '[placeholder=Час]')
 
-        submit_button = self.find_element(By.CSS_SELECTOR, '[type=submit]')
-
-        services_input.send_keys("." + option_value)
+        services_input.send_keys("." + client.category)
         self.submit_option()
 
-        dates: list[datetime] = []
         try_n = 0
 
         while True:
             min_str = datetime.datetime.now().strftime('%M:%S')
-            if min_str == '29:59' or min_str == '59:59':
+            if min_str == '29:56' or min_str == '59:56':
                 break
 
-            time.sleep(.5)
-
         while True:
-            if try_n >= 50:
+            if try_n >= 3:
                 break
 
             try_n += 1
 
             time.sleep(.15)
 
-            self.update_option(option_value)
+            self.update_category(client.category)
 
             date_input = self.find_element(By.CSS_SELECTOR, '[placeholder=Дата]')
 
@@ -132,10 +118,9 @@ class GovDriver(Chrome):
 
                 try:
                     rdt_picker = self.find_element(By.CLASS_NAME, 'rdtPicker')
-                    rdt_days = rdt_picker.find_elements(By.CSS_SELECTOR,
-                                                        'td:not(.rdtDisabled):not(.rdtSel):not(.rdtOld):not(.rdtNew)')
 
-                    rdt_day = rdt_days[0]
+                    rdt_day = rdt_picker.find_element(By.CSS_SELECTOR,
+                                                      'td:not(.rdtDisabled):not(.rdtSel):not(.rdtOld):not(.rdtNew)')
 
                     data_day = rdt_day.get_attribute('data-value')
                     data_month = rdt_day.get_attribute('data-month')
@@ -145,10 +130,6 @@ class GovDriver(Chrome):
                                           month=int(data_month),
                                           year=int(data_year))
 
-                    MyLogger.logger().info(str(_date))
-
-                    dates.append(_date)
-
                     rdt_day.click()
 
                     time.sleep(.1)
@@ -156,23 +137,19 @@ class GovDriver(Chrome):
                     time_input.click()
 
                     dialog_content = self.find_element(By.CSS_SELECTOR, ".MuiDialogContent-root.jss92")
+                    time_button = dialog_content.find_element(By.CSS_SELECTOR, "button")
 
-                    buttons = dialog_content.find_elements(By.CSS_SELECTOR, "button")
-
-                    button = buttons[0]
-                    from_time_text = button.find_element(By.CSS_SELECTOR,
-                                                         'span.MuiButton-label').text.split('-')[0]
+                    from_time_text = time_button.find_element(By.CSS_SELECTOR,
+                                                              'span.MuiButton-label').text.split('-')[0]
 
                     _time = datetime.time(hour=int(from_time_text.split(':')[0]),
                                           minute=int(from_time_text.split(':')[1]))
 
-                    client = database.get_unreg_clients()[0]
+                    time_button.click()
 
-                    button.click()
+                    self.find_element(By.CSS_SELECTOR, '[type=submit]').click()
 
-                    submit_button.click()
-
-                    time.sleep(1.5)
+                    time.sleep(.3)
 
                     surname_input = self.find_element(By.CSS_SELECTOR, '[name=lastName]')
                     name_input = self.find_element(By.CSS_SELECTOR, '[name=firstName]')
@@ -180,7 +157,6 @@ class GovDriver(Chrome):
                     phone_input = self.find_element(By.CSS_SELECTOR, '[name=phoneNumber]')
                     email_input = self.find_element(By.CSS_SELECTOR, '[name=email]')
                     email2_input = self.find_element(By.CSS_SELECTOR, '[name=re_email]')
-                    submit_input = self.find_element(By.CSS_SELECTOR, '[type=submit]')
 
                     name_input.send_keys(client.name)
                     surname_input.send_keys(client.surname)
@@ -191,7 +167,7 @@ class GovDriver(Chrome):
 
                     while True:
                         try:
-                            submit_input.click()
+                            self.find_element(By.CSS_SELECTOR, '[type=submit]').click()
                             break
                         except ElementClickInterceptedException:
                             ...
@@ -203,25 +179,44 @@ class GovDriver(Chrome):
                         f'screens/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")}'
                         f'({datetime.datetime.combine(_date, _time).strftime("%Y-%m-%d_%H-%M")}).png')
 
-                    database.write_date(DataDate(bdid=-1,
+                    db_dates.write_date(DataDate(bdid=-1,
                                                  datetime=datetime.datetime.combine(_date, _time),
                                                  client_id=client.bdid))
 
                     client.registered = True
-                    database.update_client(client)
+                    db_clients.update_client(client)
 
-                    while True: ...
+                    while True:
+                        try:
+                            self.find_element(By.CSS_SELECTOR, '[type=submit]').click()
+                            break
+                        except ElementClickInterceptedException:
+                            ...
+
+                    return True
                 except NoSuchElementException:
                     MyLogger.logger().error("Cannot get .rdtPicker (calendar).")
+                    return False
 
-    def update_option(self, option_value: str):
+                finally:
+                    return False
+
+        return False
+
+    def submit_option(self):
+        try:
+            option = self.find_element(By.CSS_SELECTOR, '[role=option]')
+            option.click()
+        except NoSuchElementException:
+            MyLogger.logger().warning("Cannot submit option: element is not exists")
+
+    def update_category(self, category: str):
         __option_value_to_switch: str = "Постійний КО"
-        # __option_value_to_switch: str = "Посвідчення на повернення в Україну"
 
         services_input = self.find_element(By.ID, 'services')
 
         services_input.click()
-        services_input.send_keys('\b' * (len(option_value) + 15))
+        services_input.send_keys('\b' * (len(category) + 15))
 
         time.sleep(.15)
 
@@ -235,5 +230,5 @@ class GovDriver(Chrome):
 
         time.sleep(.15)
 
-        services_input.send_keys(f'{option_value}')
+        services_input.send_keys(f'{category}')
         self.submit_option()
