@@ -107,7 +107,7 @@ class DateCatchDriver(Chrome):
 
         while True:
             min_str = datetime.datetime.now().strftime('%M:%S')
-            if min_str == '29:56' or min_str == '59:56':
+            if min_str == '59:56':
                 break
 
         while True:

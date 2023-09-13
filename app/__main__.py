@@ -33,10 +33,10 @@ async def main():
         MyLogger.logger().info("Waiting for minutes to be equal 28 or 58")
 
         while True:
-            minutes_str = datetime.now().time().strftime('%M')
+            minutes_str = datetime.now().time().strftime('%H:%M')
 
-            # if minutes_str == '28' or minutes_str == '58':
-            Controller.start_dates_catching()
+            if minutes_str == '02:58':
+                Controller.start_dates_catching()
 
             Controller.join_all()
 
