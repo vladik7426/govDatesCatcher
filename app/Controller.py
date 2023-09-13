@@ -50,14 +50,19 @@ class Controller:
     def __start_catching_for_client(cls, client: DataClient, driver: DateCatchDriver) -> bool:
         driver.set_basic_inputs_values(client.consulate)
 
-        gdc_bot.send_info(f"Ловимо дату для {client.name}({client.consulate}, {client.category})")
+        # gdc_bot.send_info(f"Ловимо дату для {client.name}({client.consulate}, {client.category})")
 
         if driver.catch_date_for_client(client):
-            gdc_bot.send_alert(f"Підтвердіть злапану дату для {client.name}({client.consulate}, {client.category})!\n"
-                               f"Пошта: {client.email}")
+            # gdc_bot.send_alert(f"Підтвердіть злапану дату для {client.name}({client.consulate}, {client.category})!\n"
+            #                    f"Пошта: {client.email}")
+            MyLogger.logger().info(
+                f"Підтвердіть злапану дату для {client.name}({client.consulate}, {client.category})!\n"
+                f"Пошта: {client.email}")
             return True
         else:
-            gdc_bot.send_info(f"Не вийшло злапати дату для {client.name}({client.consulate}, {client.category}) :(")
+            # gdc_bot.send_info(f"Не вийшло злапати дату для {client.name}({client.consulate}, {client.category}) :(")
+            MyLogger.logger().info(
+                f"Не вийшло злапати дату для {client.name}({client.consulate}, {client.category}) :(")
             return False
 
     @classmethod

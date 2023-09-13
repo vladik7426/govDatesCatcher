@@ -35,8 +35,8 @@ async def main():
         while True:
             minutes_str = datetime.now().time().strftime('%M')
 
-            if minutes_str == '28' or minutes_str == '58':
-                Controller.start_dates_catching()
+            # if minutes_str == '28' or minutes_str == '58':
+            Controller.start_dates_catching()
 
             Controller.join_all()
 
@@ -44,7 +44,7 @@ async def main():
 
     except Exception as e:
         MyLogger.logger().error(str(e))
-        gdc_bot.send_error(str(e))
+        # gdc_bot.send_error(str(e))
 
     finally:
         Controller.kill_all_processes()
@@ -53,6 +53,6 @@ async def main():
 if __name__ == '__main__':
     threading.Thread.name = 'Main'
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(gdc_bot.start_telegram_log_bot())
-    loop.run_until_complete(main())
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(gdc_bot.start_telegram_log_bot())
+    asyncio.run(main())
