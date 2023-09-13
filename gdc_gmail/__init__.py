@@ -50,7 +50,7 @@ def get_book_submit_url_by_number(book_number: int):
                 soup = BeautifulSoup(bytes(base64.urlsafe_b64decode(m['payload']['body']['data'])).decode('utf8'),
                                      'html.parser')
                 if int(soup.select_one("tr td:nth-child(2)").text) == book_number:
-                    return soup.find_all('a')[1].get('href')
+                    return soup.find('a').get('href')
             except KeyError:
                 pass
 
