@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from gdc_database.__executor import execute_query_all, execute_query
+from gdc.database.__executor import execute_query_all, execute_query
 
 
 @dataclass

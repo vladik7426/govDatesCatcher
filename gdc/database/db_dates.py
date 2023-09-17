@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from datetime import datetime
 
-from gdc_database.__executor import execute_query
+from gdc.database.__executor import execute_query
 
 
 @dataclass

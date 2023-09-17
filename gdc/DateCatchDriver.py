@@ -5,16 +5,18 @@ import os
 import time
 import datetime
 from os import path
+from timeit import timeit
 
 from selenium.common import NoSuchElementException, ElementClickInterceptedException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
 
-import gdc_gmail
-from app.logger import MyLogger
-from gdc_database import db_clients, db_dates
-from gdc_database.db_clients import DataClient
-from gdc_database.db_dates import DataDate
+from logger import logger
+
+import gmail
+from database import db_clients, db_dates
+from database.db_clients import DataClient
+from database.db_dates import DataDate
 
 
 class DateCatchDriver(Chrome):
@@ -29,7 +31,11 @@ class DateCatchDriver(Chrome):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument('user-data-dir=C:/Users/uavla/AppData/Local/Google/Chrome/User Data')
 
+        logger.debug("DatesCatchDriver initialization..")
+
         super().__init__(options=options, use_subprocess=True)
+
+        logger.debug("DatesCatchDriver started!")
 
     def set_basic_inputs_values(self, consulate: str):
         self.get('https://online.mfa.gov.ua/application/')
@@ -46,13 +52,13 @@ class DateCatchDriver(Chrome):
                                                               "MuiButton-text MuiButton-textPrimary']")
             popup_button.click()
 
-            MyLogger.logger().info("Closed info popup.")
+            logger.debug("Closed info popup.")
         except NoSuchElementException:
             pass
 
         countries_input = self.find_element(By.ID, "countries")
-        self.__send_keys(countries_input, '.Канада')
-        # self.__send_keys(countries_input, '.Бразилія')
+        # self.__send_keys(countries_input, '.Канада')
+        self.__send_keys(countries_input, '.Бразилія')
 
         self.submit_option()
 
@@ -65,6 +71,8 @@ class DateCatchDriver(Chrome):
             except Exception:
                 pass
 
+        ctime_start = time.time()
+
         while True:
             try:
                 self.find_element(By.CSS_SELECTOR,
@@ -72,8 +80,9 @@ class DateCatchDriver(Chrome):
                                   "MuiDialog-paperWidthSm MuiPaper-elevation24 MuiPaper-rounded']")
 
             except NoSuchElementException:
-                MyLogger.logger().info("Captcha solved.")
                 break
+
+        logger.debug(f"Captcha solved in {time.time() - ctime_start}.")
 
         countries_input = self.find_element(By.ID, "consulates")
         self.__send_keys(countries_input, '.' + consulate)
@@ -105,13 +114,17 @@ class DateCatchDriver(Chrome):
 
         try_n = 0
 
+        logger.debug("Waiting for 59 minutes and 56 seconds to start catching..")
+
         while True:
             min_str = datetime.datetime.now().strftime('%M:%S')
             if min_str == '59:56':
                 break
 
+        logger.debug("Start catching..")
+
         while True:
-            if try_n >= 50:
+            if try_n >= 75:
                 break
 
             try_n += 1
@@ -123,6 +136,8 @@ class DateCatchDriver(Chrome):
             date_input = self.find_element(By.CSS_SELECTOR, '[placeholder=Дата]')
 
             if not date_input.get_property('readonly') and not date_input.get_property('disabled'):
+                logger.debug("Got dates!")
+
                 date_input.click()
 
                 try:
@@ -156,6 +171,10 @@ class DateCatchDriver(Chrome):
 
                     time_button.click()
 
+                    logger.debug("Selected date:"
+                                 f"{datetime.datetime.combine(_date, _time).strftime('%Y.%m.%d_%H:%M')}, "
+                                 "going to the next page..")
+
                     self.find_element(By.CSS_SELECTOR, '[type=submit]').click()
 
                     time.sleep(.3)
@@ -173,6 +192,11 @@ class DateCatchDriver(Chrome):
                     phone_input.send_keys(client.phone)
                     email_input.send_keys(client.email)
                     email2_input.send_keys(client.email)
+
+                    logger.debug("Inputed client info:\n"
+                                 f"\t{client.name} {client.surname} {client.thirdname}"
+                                 f"\t{client.phone} | {client.email}\n"
+                                 "Going to the next page..")
 
                     while True:
                         try:
@@ -218,10 +242,12 @@ class DateCatchDriver(Chrome):
                         f'{dir_name}/'
                         f'{datetime.datetime.combine(_date, _time).strftime("%Y-%m-%d_%H-%M")}-2.png')
 
+                    logger.debug("Trying to submit with gmail..")
+
                     while True:
                         try:
                             book_number = int(self.find_element(By.CSS_SELECTOR, '.jss143 h5').text.split(': ')[1])
-                            book_submit_url = gdc_gmail.get_book_submit_url_by_number(book_number)
+                            book_submit_url = gmail.get_book_submit_url_by_number(book_number)
 
                             if book_submit_url is None:
                                 raise ValueError("URL is None")
@@ -232,7 +258,9 @@ class DateCatchDriver(Chrome):
                                     self.find_element(By.CSS_SELECTOR, 'button').click()
                                     break
                                 except Exception as ex:
-                                    print("Submit form from gmail error:", ex)
+                                    logger.warning("Submit form from gmail error: %s", ex)
+
+                            logger.debug("Gmail submited successfuly!")
 
                             break
                         except IndexError:
@@ -249,10 +277,7 @@ class DateCatchDriver(Chrome):
 
                     return True
                 except NoSuchElementException:
-                    MyLogger.logger().error("Cannot get .rdtPicker (calendar).")
-                    return False
-
-                finally:
+                    logger.warning("Cannot get .rdtPicker (calendar).")
                     return False
 
         return False
@@ -262,7 +287,7 @@ class DateCatchDriver(Chrome):
             option = self.find_element(By.CSS_SELECTOR, '[role=option]')
             option.click()
         except NoSuchElementException:
-            MyLogger.logger().warning("Cannot submit option: element is not exists")
+            logger.warning("Cannot submit option: element is not exists")
 
     def update_category(self, category: str):
         __option_value_to_switch: str = "Постійний КО"

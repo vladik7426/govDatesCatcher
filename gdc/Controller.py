@@ -1,17 +1,15 @@
 """
 Here are thread controlling functional
 """
-import asyncio
 import sys
+import threading
 from multiprocessing import Process
 from queue import Queue
-from threading import Thread
 
-import gdc_bot
-from app.DateCatchDriver import DateCatchDriver
-from app.logger import MyLogger
-from gdc_database import db_clients
-from gdc_database.db_clients import DataClient
+from database import db_clients
+from database.db_clients import DataClient
+from gdc.DateCatchDriver import DateCatchDriver
+from gdc.logger import logger
 
 
 class Controller:
@@ -33,6 +31,8 @@ class Controller:
 
     @classmethod
     def _dates_catcher_process_handler(cls):
+        logger.debug(f"Started: DatesCatcherProcess-{len(cls.__dates_catcher_processes)}")
+
         unreg_clients = db_clients.get_unreg_clients()
         if len(unreg_clients) > 0:
             driver = DateCatchDriver()
@@ -50,18 +50,15 @@ class Controller:
     def __start_catching_for_client(cls, client: DataClient, driver: DateCatchDriver) -> bool:
         driver.set_basic_inputs_values(client.consulate)
 
-        # gdc_bot.send_info(f"Ловимо дату для {client.name}({client.consulate}, {client.category})")
+        logger.info(f"Ловимо дату для {client.name}({client.consulate}, {client.category})")
 
         if driver.catch_date_for_client(client):
-            # gdc_bot.send_alert(f"Підтвердіть злапану дату для {client.name}({client.consulate}, {client.category})!\n"
-            #                    f"Пошта: {client.email}")
-            MyLogger.logger().info(
-                f"Підтвердіть злапану дату для {client.name}({client.consulate}, {client.category})!\n"
+            logger.info(
+                f"Зловили дату для {client.name}({client.consulate}, {client.category})!\n"
                 f"Пошта: {client.email}")
             return True
         else:
-            # gdc_bot.send_info(f"Не вийшло злапати дату для {client.name}({client.consulate}, {client.category}) :(")
-            MyLogger.logger().info(
+            logger.info(
                 f"Не вийшло злапати дату для {client.name}({client.consulate}, {client.category}) :(")
             return False
 
@@ -75,7 +72,7 @@ class Controller:
 
     @classmethod
     def kill_all_processes(cls):
-        MyLogger.logger().info("Killing all processes.")
+        logger.debug("Killing all processes.")
 
         for driver in cls.__drivers:
             driver.quit()

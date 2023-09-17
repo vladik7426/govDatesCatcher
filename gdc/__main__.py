@@ -8,12 +8,9 @@ import asyncio
 import threading
 from datetime import datetime
 from queue import Queue
-from time import sleep
 
-import gdc_bot
-from app.Controller import Controller
-from app.DateCatchDriver import DateCatchDriver
-from app.logger import MyLogger
+from gdc.Controller import Controller
+from gdc.logger import logger
 
 """
 ГКУ в Торонто:
@@ -23,19 +20,18 @@ from app.logger import MyLogger
 
 
 async def main():
-    MyLogger.init_logger()
-
     try:
-        queue = Queue()
+        Controller.init(Queue())
 
-        Controller.init(queue)
-
-        MyLogger.logger().info("Waiting for minutes to be equal 28 or 58")
+        logger.debug("Starting main loop..")
 
         while True:
-            minutes_str = datetime.now().time().strftime('%H:%M')
+            # minutes_str = datetime.now().time().strftime('%H:%M')
+            minutes_str = datetime.now().time().strftime('%M')
 
-            if minutes_str == '02:58':
+#             if minutes_str == '02:57':
+            if minutes_str == '57':
+                logger.debug(f"Time: {minutes_str}. Starting driver..")
                 Controller.start_dates_catching()
 
             Controller.join_all()
@@ -43,16 +39,13 @@ async def main():
             await asyncio.sleep(1)
 
     except Exception as e:
-        MyLogger.logger().error(str(e))
-        # gdc_bot.send_error(str(e))
+        logger.exception("An error occurred when in main loop:")
 
     finally:
         Controller.kill_all_processes()
 
 
 if __name__ == '__main__':
-    threading.Thread.name = 'Main'
+    threading.Thread.name = 'MainThread'
 
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(gdc_bot.start_telegram_log_bot())
     asyncio.run(main())

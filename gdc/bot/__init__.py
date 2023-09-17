@@ -1,10 +1,8 @@
-import asyncio
-
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 
-from gdc_database import db_bot_chats
-from gdc_database.db_bot_chats import BotChatData
+from gdc.database import db_bot_chats
+from gdc.database.db_bot_chats import BotChatData
 
 bot = Bot("6512951342:AAHGL6ynxmKqUZkWbsUg6nJEFTaaoZHbCSg")
 dp = Dispatcher()

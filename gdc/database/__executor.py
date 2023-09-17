@@ -1,6 +1,6 @@
 from pymysql import connect
 
-from gdc_database import database_connection_info
+from gdc.database import database_connection_info
 
 
 def execute_query(query, args: tuple) -> bool:
