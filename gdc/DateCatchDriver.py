@@ -57,8 +57,8 @@ class DateCatchDriver(Chrome):
             pass
 
         countries_input = self.find_element(By.ID, "countries")
-        # self.__send_keys(countries_input, '.Канада')
-        self.__send_keys(countries_input, '.Бразилія')
+        self.__send_keys(countries_input, '.Канада')
+        # self.__send_keys(countries_input, '.Бразилія')
 
         self.submit_option()
 
@@ -118,13 +118,13 @@ class DateCatchDriver(Chrome):
 
         while True:
             min_str = datetime.datetime.now().strftime('%M:%S')
-            if min_str == '59:56':
+            if min_str.split(':')[0][-1] == '9' and int(min_str.split(':')[1]) > 55:
                 break
 
         logger.debug("Start catching..")
 
         while True:
-            if try_n >= 75:
+            if try_n >= 175:
                 break
 
             try_n += 1

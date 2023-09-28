@@ -26,11 +26,11 @@ async def main():
         logger.debug("Starting main loop..")
 
         while True:
-            # minutes_str = datetime.now().time().strftime('%H:%M')
-            minutes_str = datetime.now().time().strftime('%M')
+            minutes_str = datetime.now().time().strftime('%H:%M')
 
-#             if minutes_str == '02:57':
-            if minutes_str == '57':
+            times_str = ('08:55', '08:25', '02:55', '02:25', '01:25', '01:55')
+
+            if minutes_str in times_str:
                 logger.debug(f"Time: {minutes_str}. Starting driver..")
                 Controller.start_dates_catching()
 
