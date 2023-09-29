@@ -28,7 +28,7 @@ async def main():
         while True:
             minutes_str = datetime.now().time().strftime('%H:%M')
 
-            times_str = ('08:55', '08:25', '02:55', '02:25', '01:25', '01:55')
+            times_str = ('07:55', '08:25', '02:55', '02:25', '01:25', '01:55')
 
             if minutes_str in times_str:
                 logger.debug(f"Time: {minutes_str}. Starting driver..")

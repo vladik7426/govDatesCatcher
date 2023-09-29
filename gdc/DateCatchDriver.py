@@ -29,7 +29,7 @@ class DateCatchDriver(Chrome):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-setuid-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument('user-data-dir=C:/Users/uavla/AppData/Local/Google/Chrome/User Data')
+        options.add_argument('user-data-dir=C:\\users\\Влад\\AppData\\Local\\Google\\Chrome\\User Data')
 
         logger.debug("DatesCatchDriver initialization..")
 
